@@ -3,17 +3,15 @@ package order.control;
 import order.model.MessageDTO;
 import order.model.Order;
 import order.model.OrderDTO;
+import order.service.KafkaProducerServ;
 import order.service.OrderServ;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
-import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -23,12 +21,14 @@ public class OrderControl {
     private static final Logger LOG = LoggerFactory.getLogger(OrderControl.class.getSimpleName());
 
     private final OrderServ orderServ;
+    private final KafkaProducerServ kafkaProducerServ;
 
     @Autowired
     private KafkaTemplate<Integer, MessageDTO> kafkaTemplate;
 
-    public OrderControl(OrderServ orderServ) {
+    public OrderControl(OrderServ orderServ, KafkaProducerServ kafkaProducerServ) {
         this.orderServ = orderServ;
+        this.kafkaProducerServ = kafkaProducerServ;
     }
 
     @PostMapping("/make")
@@ -39,9 +39,7 @@ public class OrderControl {
         int idOrder = order.getId();
         String address = "To MSK " + idOrder;
         MessageDTO messageDTO = MessageDTO.of(idOrder, address);
-        ListenableFuture<SendResult<Integer, MessageDTO>> future = kafkaTemplate.send("message", idOrder, messageDTO);
-        future.addCallback(System.out::println, System.err::println);
-        kafkaTemplate.flush();
+        kafkaProducerServ.send(idOrder, messageDTO);
 
         return new ResponseEntity<Order>(
                 order,

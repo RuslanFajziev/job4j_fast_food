@@ -1,12 +1,12 @@
-package notification.controller;
+package notification.services;
 
 import notification.model.MessageDTO;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
-public class KafkaNotificationController {
+@Service
+public class KafkaConsumerServ {
 
     @KafkaListener(topics = "message")
     public void orderListener(ConsumerRecord<Integer, MessageDTO> record) {
